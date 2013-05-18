@@ -167,11 +167,21 @@ copyex:
 	str	r1, [r0]
 # endif
 
+	/* xieyangrun */
+# if defined(CONFIG_S3C2440)
+	ldr r1, =0x7fff
+	ldr r0, =INTSUBMSK
+	str r1, [r0]
+	ldr r0, =CLKDIVN
+	mov r1, #0x05
+	str r1, [r0]
+# else
 	/* FCLK:HCLK:PCLK = 1:2:4 */
 	/* default FCLK is 120 MHz ! */
 	ldr	r0, =CLKDIVN
 	mov	r1, #3
 	str	r1, [r0]
+# endif /* CONFIG_S3C2440 */	
 #endif	/* CONFIG_S3C24X0 */
 
 	/*
