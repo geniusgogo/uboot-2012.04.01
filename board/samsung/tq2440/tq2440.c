@@ -124,7 +124,7 @@ int board_early_init_f(void)
 
 int board_init(void)
 {
-	/* arch number of SMDK2410-Board */
+	/* arch number of SMDK2440-Board */
 	gd->bd->bi_arch_number = MACH_TYPE_S3C2440;
 
 	/* adress of boot parameters */
