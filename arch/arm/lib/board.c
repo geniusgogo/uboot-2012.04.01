@@ -369,8 +369,9 @@ void board_init_f(ulong bootflag)
 	 * reserve memory for U-Boot code, data & bss
 	 * round down to next 4 kB limit
 	 */
-	addr -= gd->mon_len;
-	addr &= ~(4096 - 1);
+	// addr -= gd->mon_len;
+	// addr &= ~(4096 - 1);
+	addr = CONFIG_SYS_TEXT_BASE;
 
 	debug("Reserving %ldk for U-Boot at: %08lx\n", gd->mon_len >> 10, addr);
 
@@ -435,8 +436,8 @@ void board_init_f(ulong bootflag)
 	debug("relocation Offset is: %08lx\n", gd->reloc_off);
 	memcpy(id, (void *)gd, sizeof(gd_t));
 
-	relocate_code(addr_sp, id, addr);
-
+	// relocate_code(addr_sp, id, addr);
+	second(id, addr, addr_sp);
 	/* NOTREACHED - relocate_code() does not return */
 }
 
@@ -454,51 +455,33 @@ static char *failed = "*** failed ***\n";
  *
  ************************************************************************
  */
-
-void board_init_r(gd_t *id, ulong dest_addr)
+#ifndef BOOT_NAND
+#define BOOT_NAND	0
+#endif
+#ifndef BOOT_NOR
+#define BOOT_NOR	1
+#endif
+static int boot_mode_check(void)
 {
-	ulong malloc_start;
+	volatile int *p = (volatile int *)0;
+	int val;
+
+	val = *p;
+	*p = 0x12345678;
+
+	if (*p != 0x12345678)
+		return BOOT_NOR;
+	else {	
+		*p = val;
+		return BOOT_NAND;
+	}
+}
+
+static void nor_flash_init(void)
+{
 #if !defined(CONFIG_SYS_NO_FLASH)
 	ulong flash_size;
 #endif
-
-	gd = id;
-
-	gd->flags |= GD_FLG_RELOC;	/* tell others: relocation done */
-	bootstage_mark_name(BOOTSTAGE_ID_START_UBOOT_R, "board_init_r");
-
-	monitor_flash_len = _end_ofs;
-
-	/* Enable caches */
-	enable_caches();
-
-	debug("monitor flash len: %08lX\n", monitor_flash_len);
-	board_init();	/* Setup chipselects */
-	/*
-	 * TODO: printing of the clock inforamtion of the board is now
-	 * implemented as part of bdinfo command. Currently only support for
-	 * davinci SOC's is added. Remove this check once all the board
-	 * implement this.
-	 */
-#ifdef CONFIG_CLOCKS
-	set_cpu_clk_info(); /* Setup clock information */
-#endif
-#ifdef CONFIG_SERIAL_MULTI
-	serial_initialize();
-#endif
-
-	debug("Now running in RAM - U-Boot at: %08lx\n", dest_addr);
-
-#ifdef CONFIG_LOGBUFFER
-	logbuff_init_ptrs();
-#endif
-#ifdef CONFIG_POST
-	post_output_backlog();
-#endif
-
-	/* The Malloc area is immediately below the monitor copy in DRAM */
-	malloc_start = dest_addr - TOTAL_MALLOC_LEN;
-	mem_malloc_init (malloc_start, TOTAL_MALLOC_LEN);
 
 #if !defined(CONFIG_SYS_NO_FLASH)
 	puts("Flash: ");
@@ -528,11 +511,58 @@ void board_init_r(gd_t *id, ulong dest_addr)
 		hang();
 	}
 #endif
+}
 
-#if defined(CONFIG_CMD_NAND)
-	puts("NAND:  ");
-	nand_init();		/* go init the NAND */
+void board_init_r(gd_t *id, ulong dest_addr)
+{
+	ulong malloc_start;
+
+	gd = id;
+
+	gd->flags |= GD_FLG_RELOC;	/* tell others: relocation done */
+	bootstage_mark_name(BOOTSTAGE_ID_START_UBOOT_R, "board_init_r");
+
+	monitor_flash_len = _end_ofs;
+
+	/* Enable caches */
+	// enable_caches();
+	
+	debug("monitor flash len: %08lX\n", monitor_flash_len);
+	board_init();	/* Setup chipselects */
+	/*
+	 * TODO: printing of the clock inforamtion of the board is now
+	 * implemented as part of bdinfo command. Currently only support for
+	 * davinci SOC's is added. Remove this check once all the board
+	 * implement this.
+	 */
+#ifdef CONFIG_CLOCKS
+	set_cpu_clk_info(); /* Setup clock information */
 #endif
+#ifdef CONFIG_SERIAL_MULTI
+	serial_initialize();
+#endif
+
+	debug("Now running in RAM - U-Boot at: %08lx\n", dest_addr);
+
+#ifdef CONFIG_LOGBUFFER
+	logbuff_init_ptrs();
+#endif
+#ifdef CONFIG_POST
+	post_output_backlog();
+#endif
+
+	/* The Malloc area is immediately below the monitor copy in DRAM */
+	malloc_start = dest_addr - TOTAL_MALLOC_LEN;
+	mem_malloc_init (malloc_start, TOTAL_MALLOC_LEN);
+
+	if (boot_mode_check() == BOOT_NOR) {
+		nor_flash_init();
+	} else {
+# if defined(CONFIG_CMD_NAND)
+		puts("NAND:  ");
+		nand_init();		/* go init the NAND */
+# endif
+	}
 
 #if defined(CONFIG_CMD_ONENAND)
 	onenand_init();
