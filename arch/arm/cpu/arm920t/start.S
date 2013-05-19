@@ -167,7 +167,6 @@ copyex:
 	str	r1, [r0]
 # endif
 
-	/* xieyangrun */
 # if defined(CONFIG_S3C2440)
 	ldr r1, =0x7fff
 	ldr r0, =INTSUBMSK
@@ -197,10 +196,19 @@ call_board_init_f:
 	ldr	sp, =(CONFIG_SYS_INIT_SP_ADDR)
 	bic	sp, sp, #7 /* 8-byte alignment for ABI compliance */
 	ldr	r0,=0x00000000
-	bl	board_init_f
+	ldr r1, _TEXT_BASE
+	ldr r2, _bss_start_ofs
+	bl copy_code_to_sdram
+	bl clear_bss
+	ldr pc, =board_init_f
+
+	.globl second
+second:
+	mov sp, r2
+	bl board_init_r
 
 /*------------------------------------------------------------------------------*/
-
+#if 0
 /*
  * void relocate_code (addr_sp, gd, addr_moni)
  *
@@ -289,7 +297,7 @@ clbss_l:str	r2, [r0]		/* clear loop...		    */
 	bl coloured_LED_init
 	bl red_led_on
 #endif
-
+#endif
 /*
  * We are done. Do not return, instead branch to second part of board
  * initialization, now running from RAM.

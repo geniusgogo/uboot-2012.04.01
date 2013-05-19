@@ -39,7 +39,7 @@
 #define CONFIG_S3C2440
 // #define CONFIG_SMDK2410		/* on a SAMSUNG SMDK2410 Board */
 
-#define CONFIG_SYS_TEXT_BASE	0x0
+#define CONFIG_SYS_TEXT_BASE	0x33f80000
 #define CONFIG_AUTO_COMPLETE
 
 #define CONFIG_SYS_ARM_CACHE_WRITETHROUGH
@@ -56,9 +56,6 @@
 /*
  * Hardware drivers
  */
-// #define CONFIG_CS8900		/* we have a CS8900 on-board */
-// #define CONFIG_CS8900_BASE	0x19000300
-// #define CONFIG_CS8900_BUS16	/* the Linux driver does accesses as shorts */
 #define CONFIG_DRIVER_DM9000
 #define CONFIG_DM9000_NO_SROM	1
 #define CONFIG_DM9000_BASE	0x20000000
@@ -73,11 +70,7 @@
 
 /************************************************************
  * USB support (currently only works with D-cache off)
- ************************************************************/ 
-// #define CONFIG_USB_OHCI
-// #define CONFIG_USB_KEYBOARD
-// #define CONFIG_USB_STORAGE
-// #define CONFIG_DOS_PARTITION
+ ************************************************************/
 
 /************************************************************
  * RTC
@@ -105,7 +98,7 @@
 #define CONFIG_CMD_DATE
 // #define CONFIG_CMD_DHCP
 #define CONFIG_CMD_ELF
-// #define CONFIG_CMD_NAND
+#define CONFIG_CMD_NAND
 #define CONFIG_CMD_PING
 #define CONFIG_CMD_REGINFO
 // define CONFIG_CMD_USB
@@ -189,6 +182,7 @@
 #define CONFIG_SYS_FLASH_CFI
 #define CONFIG_FLASH_CFI_DRIVER
 #define CONFIG_FLASH_CFI_LEGACY
+// #define CONFIG_SYS_FLASH_LEGACY_512Kx16
 #define CONFIG_SYS_FLASH_LEGACY_1024Kx16
 
 #define CONFIG_FLASH_SHOW_PROGRESS	45
@@ -198,8 +192,9 @@
 #define CONFIG_SYS_MAX_FLASH_SECT	(35)
 
 #define CONFIG_ENV_ADDR			(CONFIG_SYS_FLASH_BASE + 0x070000)
-#define CONFIG_ENV_IS_IN_FLASH
-#define CONFIG_ENV_SIZE			0x10000
+#define CONFIG_ENV_IS_IN_NAND
+#define CONFIG_ENV_OFFSET		0x40000
+#define CONFIG_ENV_SIZE			0x20000
 /* allow to overwrite serial and ethaddr */
 #define CONFIG_ENV_OVERWRITE
 
@@ -216,8 +211,8 @@
  * NAND configuration
  */
 #ifdef CONFIG_CMD_NAND
-#define CONFIG_NAND_S3C2410
-#define CONFIG_SYS_S3C2410_NAND_HWECC
+#define CONFIG_NAND_S3C2440
+#define CONFIG_SYS_S3C2440_NAND_HWECC
 #define CONFIG_SYS_MAX_NAND_DEVICE	1
 #define CONFIG_SYS_NAND_BASE		0x4E000000
 #endif
@@ -225,15 +220,12 @@
 /*
  * File system
  */
-// #define CONFIG_CMD_FAT
-// #define CONFIG_CMD_EXT2
-// #define CONFIG_CMD_UBI
-// #define CONFIG_CMD_UBIFS
-// #define CONFIG_CMD_MTDPARTS
-// #define CONFIG_MTD_DEVICE
-// #define CONFIG_MTD_PARTITIONS
-// #define CONFIG_YAFFS2
-// #define CONFIG_RBTREE
+
+#define CONFIG_CMD_MTDPARTS
+#define CONFIG_MTD_DEVICE
+#define MTDIDS_DEFAULT		"nand0=tq2440-0"
+#define MTDPARTS_DEFAULT	"mtdparts=tq2440-0:512k(u-boot),"	\
+							"128k(params),3m(kernel),-(rootfs)"
 
 /* additions for new relocation code, must be added to all boards */
 #define CONFIG_SYS_SDRAM_BASE	PHYS_SDRAM_1
